@@ -1,22 +1,27 @@
-// Lasers (PixelBlaze pattern)
-// by Scott Balay
-// https://github.com/zenblender
+// Pew-Pew-Pew! (Pattern for PixelBlaze)
+// by Scott Balay -- https://github.com/zenblender
 
-laserCount = 5  // use a multiple of numAvailableRGBs to have each available color represented equally
+laserCount = 5  // use a multiple of numPaletteRGBs to have each available color represented equally
 fadeFactor = 0.8
-deltaFactor = 0.01
+speedFactor = 0.01
 
 // init RGBs that in the palette of available colors:
-numAvailableRGBs = 5
-availableRGBs = array(numAvailableRGBs)
-availableRGBs[0] = packRGB(255,13,107)
-availableRGBs[1] = packRGB(232,12,208)
-availableRGBs[2] = packRGB(200,0,255)
-availableRGBs[3] = packRGB(124,12,232)
-availableRGBs[4] = packRGB(70,13,255)
+numPaletteRGBs = 5
+paletteRGBs = array(numPaletteRGBs)
+paletteRGBs[0] = packRGB(255,13,107)
+paletteRGBs[1] = packRGB(232,12,208)
+paletteRGBs[2] = packRGB(200,0,255)
+paletteRGBs[3] = packRGB(124,12,232)
+paletteRGBs[4] = packRGB(70,13,255)
+
+ambientR = 15
+ambientG = 0
+ambientB = 0
+
+function getRandomVelocity() { return random(4) + 3 }
 
 // init RGB of each laser:
-laserRGBs = createArray(laserCount, function(i){ return availableRGBs[i % numAvailableRGBs] }, true)
+laserRGBs = createArray(laserCount, function(i){ return paletteRGBs[i % numPaletteRGBs] }, true)
 
 // init randomized starting positions of each laser:
 laserPositions = createArray(laserCount, function(){ return random(pixelCount) }, true)
@@ -25,9 +30,7 @@ laserPositions = createArray(laserCount, function(){ return random(pixelCount) }
 laserVelocities = createArray(laserCount, function(){ return getRandomVelocity() }, true)
 
 // init the full pixel array:
-pixelRGBs = createArray(pixelCount, 0)
-
-function getRandomVelocity() { return random(4) + 3 }
+pixelRGBs = createArray(pixelCount)
 
 export function beforeRender(delta) {
   // fade existing pixels:
@@ -42,7 +45,7 @@ export function beforeRender(delta) {
   // advance laser positions:
   for (laserIndex = 0; laserIndex < laserCount; laserIndex++) {
     currentLaserPosition = laserPositions[laserIndex]
-    nextLaserPosition = currentLaserPosition + (delta * deltaFactor * laserVelocities[laserIndex])
+    nextLaserPosition = currentLaserPosition + (delta * speedFactor * laserVelocities[laserIndex])
     for (pixelIndex = floor(nextLaserPosition); pixelIndex > currentLaserPosition; pixelIndex--) {
       // draw new laser edge, but fill in "gaps" from last draw:
       if (pixelIndex < pixelCount) {
@@ -63,19 +66,15 @@ export function beforeRender(delta) {
   }
 }
 
-export function render(pixelIndex) {
-  renderFromPackedRGB(pixelRGBs, pixelIndex)
+export function render(i) {
+  rgb(
+    clamp((getR(pixelRGBs[i]) + ambientR) / 255, 0, 1),
+    clamp((getG(pixelRGBs[i]) + ambientG) / 255, 0, 1),
+    clamp((getB(pixelRGBs[i]) + ambientB) / 255, 0, 1)
+  )
 }
 
 //===== UTILS =====
-// RENDER HELPERS:
-function renderFromPackedRGB(arr, i) {
-  rgb(
-    getR(arr[i]) / 255,
-    getG(arr[i]) / 255,
-    getB(arr[i]) / 255,
-  )
-}
 // ARRAY INIT FUNCTIONS:
 function createArray(size, valueOrFn, isFn) {
   arr = array(size)
