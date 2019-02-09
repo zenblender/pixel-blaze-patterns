@@ -1,6 +1,8 @@
 // Pew-Pew-Pew! v2.0.0 (Pattern for PixelBlaze)
 // by Scott Balay -- https://github.com/zenblender
 
+// Written for a 150-LED strip, adjust settings to your liking!
+
 isForwardDirection = true // flip to run backwards
 laserCount = 10  // use a multiple of numPaletteRGBs to have each available color represented equally
 fadeFactor = 0.8
@@ -19,6 +21,7 @@ paletteRGBs[2] = packRGB(200,0,255)
 paletteRGBs[3] = packRGB(124,12,232)
 paletteRGBs[4] = packRGB(70,13,255)
 
+// ambient color added to all LEDs to provide a base color:
 ambientR = 15
 ambientG = 0
 ambientB = 0
