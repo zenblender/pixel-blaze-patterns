@@ -1,9 +1,14 @@
-// Pew-Pew-Pew! (Pattern for PixelBlaze)
+// Pew-Pew-Pew! v2.0.0 (Pattern for PixelBlaze)
 // by Scott Balay -- https://github.com/zenblender
 
-laserCount = 5  // use a multiple of numPaletteRGBs to have each available color represented equally
+isForwardDirection = true // flip to run backwards
+laserCount = 10  // use a multiple of numPaletteRGBs to have each available color represented equally
 fadeFactor = 0.8
 speedFactor = 0.01
+
+// when on, new lasers cause entire strip to flash blue
+// when off, blue component of each laser affects its color as normal
+useBlueLightning = true
 
 // init RGBs that in the palette of available colors:
 numPaletteRGBs = 5
@@ -46,7 +51,7 @@ export function beforeRender(delta) {
   for (laserIndex = 0; laserIndex < laserCount; laserIndex++) {
     currentLaserPosition = laserPositions[laserIndex]
     nextLaserPosition = currentLaserPosition + (delta * speedFactor * laserVelocities[laserIndex])
-    for (pixelIndex = floor(nextLaserPosition); pixelIndex > currentLaserPosition; pixelIndex--) {
+    for (pixelIndex = floor(nextLaserPosition); pixelIndex >= currentLaserPosition; pixelIndex--) {
       // draw new laser edge, but fill in "gaps" from last draw:
       if (pixelIndex < pixelCount) {
         pixelRGBs[pixelIndex] = packRGB(
@@ -66,11 +71,12 @@ export function beforeRender(delta) {
   }
 }
 
-export function render(i) {
+export function render(rawIndex) {
+  index = isForwardDirection ? rawIndex : (pixelCount - rawIndex - 1)
   rgb(
-    clamp((getR(pixelRGBs[i]) + ambientR) / 255, 0, 1),
-    clamp((getG(pixelRGBs[i]) + ambientG) / 255, 0, 1),
-    clamp((getB(pixelRGBs[i]) + ambientB) / 255, 0, 1)
+    clamp((getR(pixelRGBs[index]) + ambientR) / 255, 0, 1),
+    clamp((getG(pixelRGBs[index]) + ambientG) / 255, 0, 1),
+    clamp((getB(pixelRGBs[useBlueLightning ? 0 : index]) + ambientB) / 255, 0, 1)
   )
 }
 
