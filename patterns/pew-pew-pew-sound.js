@@ -1,18 +1,21 @@
-// Pew-Pew-Pew!
+// Pew-Pew-Pew! (Sound-Reactive Version)
 // Animated LED Pattern for Pixelblaze (https://www.bhencke.com/pixelblaze)
 // Pattern Author: Scott Balay (https://www.scottbalay.com/)
 // Github: https://github.com/zenblender/pixel-blaze-patterns
 
+// *** Assumes Pixelblaze Sensor Expansion Board is connected and provides realtime sound input. ***
+
 // Written for a 150-LED strip, adjust settings to your liking!
+
+export var energyAverage
+export var maxFrequencyMagnitude
+export var maxFrequency
 
 isForwardDirection = true // flip to run backwards
 laserCount = 10  // use a multiple of numPaletteRGBs to have each available color represented equally
 fadeFactor = 0.8
 speedFactor = 0.01
-
-// when on, new lasers cause entire strip to flash blue
-// when off, blue component of each laser affects its color as normal
-useBlueLightning = true
+soundLevelPowFactor = 1.2
 
 // init RGBs that in the palette of available colors:
 numPaletteRGBs = 5
@@ -27,6 +30,27 @@ paletteRGBs[4] = packRGB(70,13,255)
 ambientR = 15
 ambientG = 0
 ambientB = 0
+
+export var soundLevelVal = 0
+
+pic = makePIController(.05, .35, 30, 0, 400)
+
+// function adapted from "sound - rays" pattern available at https://electromage.com/patterns/
+function makePIController(kp, ki, start, min, max) {
+  var pic = array(5)
+  pic[0] = kp
+  pic[1] = ki
+  pic[2] = start
+  pic[3] = min
+  pic[4] = max
+  return pic
+}
+
+// function adapted from "sound - rays" pattern available at https://electromage.com/patterns/
+function calcPIController(pic, err) {
+  pic[2] = clamp(pic[2] + err, pic[3], pic[4])
+  return pic[0] * err + pic[1] * pic[2]
+}
 
 function getRandomVelocity() { return random(4) + 3 }
 
@@ -43,6 +67,10 @@ laserVelocities = createArray(laserCount, function(){ return getRandomVelocity()
 pixelRGBs = createArray(pixelCount)
 
 export function beforeRender(delta) {
+  sensitivity = calcPIController(pic, .5 - soundLevelVal)
+
+  soundLevelVal = pow(maxFrequencyMagnitude * sensitivity, soundLevelPowFactor)
+
   // fade existing pixels:
   for (pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++) {
     pixelRGBs[pixelIndex] = packRGB(
@@ -60,9 +88,9 @@ export function beforeRender(delta) {
       // draw new laser edge, but fill in "gaps" from last draw:
       if (pixelIndex < pixelCount) {
         pixelRGBs[pixelIndex] = packRGB(
-            min(255, getR(pixelRGBs[pixelIndex]) + getR(laserRGBs[laserIndex])),
-            min(255, getG(pixelRGBs[pixelIndex]) + getG(laserRGBs[laserIndex])),
-            min(255, getB(pixelRGBs[pixelIndex]) + getB(laserRGBs[laserIndex]))
+          min(255, getR(pixelRGBs[pixelIndex]) + getR(laserRGBs[laserIndex])),
+          min(255, getG(pixelRGBs[pixelIndex]) + getG(laserRGBs[laserIndex])),
+          min(255, getB(pixelRGBs[pixelIndex]) + getB(laserRGBs[laserIndex]))
         )
       }
     }
@@ -81,7 +109,7 @@ export function render(rawIndex) {
   rgb(
     clamp((getR(pixelRGBs[index]) + ambientR) / 255, 0, 1),
     clamp((getG(pixelRGBs[index]) + ambientG) / 255, 0, 1),
-    clamp((getB(pixelRGBs[useBlueLightning ? 0 : index]) + ambientB) / 255, 0, 1)
+    clamp(((soundLevelVal * 255) + ambientB) / 255, 0, 1)
   )
 }
 
